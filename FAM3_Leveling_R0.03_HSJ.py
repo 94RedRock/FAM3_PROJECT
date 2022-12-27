@@ -2520,9 +2520,8 @@ class SpThread(QObject):
             if self.isDebug:
                 df_mergeOrderResult.to_excel('.\\debug\\Sp\\flow15-1.xlsx')
             #R0.04 HSJ ADD 레벨링 그룹 나누기 start===========================================================================
-            df_module = df_mergeOrderResult[df_mergeOrderResult['모듈 구분_x'] == '모듈'] #slave Ekfh
+            df_module = df_mergeOrderResult[df_mergeOrderResult['모듈 구분_x'] == '모듈'] 
             df_module = df_module[df_module['MODEL'].str.contains('TAH', na = False) == False]
-            df_module.to_excel('.\\debug\\Sp\\df_module.xlsx')
             df_case = df_mergeOrderResult[df_mergeOrderResult['MODEL'].str.contains('F3BL00')]
             df_terminal = df_mergeOrderResult[df_mergeOrderResult['MODEL'].str.contains('RK|TA40')]
             df_slave = df_mergeOrderResult[df_mergeOrderResult['MODEL'].str.contains('TAH')]
