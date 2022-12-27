@@ -2139,20 +2139,27 @@ class SpThread(QObject):
             df_levelingSp['Linkage Number'] = df_levelingSp['Linkage Number'].astype(str)
             progress += round(maxPb / 20)
             self.spReturnPb.emit(progress)
-            # if self.isDebug:
-            #     df_sosFile.to_excel('.\\debug\\Sp\\flow2.xlsx')
-            df_switch = df_sosFile[df_sosFile['MS Code'].str.contains('S9307UF')]
+            if self.isDebug:
+                df_sosFile.to_excel('.\\debug\\Sp\\flow2.xlsx')
+            
             # if len(df_switch) > 0:
             #     self.spReturnWarning.emit('SWITCH(S9307UF)의 수주잔이 확인되었습니다. 확인바랍니다.')
             #R0.04 HSJ ADD START S9307UF 완성지정일 추가하기===========================================================================
-            # df_switch['Planned Prod. Completion date'] = df_switch['Planned Prod. Completion date'].astype(str)
-            today
-            datetime.timedelta
-            if df_switch['Planned Prod. Completion date'] 
+            oneMonthLater = today + datetime.timedelta(days=30)
+            df_switch = df_sosFile[df_sosFile['MS Code'].str.contains('S9307UF')]
+            df_switch['남은 워킹데이'] = 0
+            df_switch['한달 후 남은 워킹데이'] = 0
             for i in df_switch.index:
+                df_switch['남은 워킹데이'][i] = self.checkWorkDay(dfCalendar, today, df_MergeLink['Planned Prod. Completion date'][i])
+                df_switch['한달 후 남은 워킹데이'][i] = self.checkWorkDay(dfCalendar, today, oneMonthLater)
                 linkageNumber = df_switch['Linkage Number'][i]
                 completionDate = df_switch['Planned Prod. Completion date'][i]
-                self.spReturnWarning.emit(f'Linkage Number:[{str(linkageNumber)}],SWITCH(S9307UF)의 수주잔이 확인되었습니다. 완성지정일: [{str(completionDate)}]')
+                if df_switch['한달 후 남은 워킹데이'][i] - df_switch['남은 워킹데이'][i] > 0:
+                    linkageNumber = df_switch['Linkage Number'][i]
+                    completionDate = df_switch['Planned Prod. Completion date'][i]
+                    self.spReturnWarning.emit(f'Linkage Number:[{str(linkageNumber)}],SWITCH(S9307UF)의 수주잔이 확인되었습니다. 완성지정일: [{str(completionDate)}]')
+            if self.isDebug:
+                df_switch.to_excel('.\\debug\\Sp\\df_switch.xlsx')
             #R0.04 HSJ ADD END S9307UF 완성지정일 추가하기===========================================================================
             # 착공 대상 외 모델 삭제
             df_sosFile = df_sosFile.drop(df_sosFile[df_sosFile['MS Code'].str.contains('ZOTHER')].index)
