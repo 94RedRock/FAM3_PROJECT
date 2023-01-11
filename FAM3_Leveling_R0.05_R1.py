@@ -2256,7 +2256,7 @@ class SpThread(QObject):
             self.spReturnPb.emit(progress)
             if self.isDebug:
                 df_SmtAssyInven.to_excel('.\\debug\\Sp\\flow5.xlsx')
-            dict_smtCnt = {}
+            dict_smtCnt = {} #commit
             for i in df_joinSmt.index:
                 if df_joinSmt['현재수량'][i] < 0:
                     df_joinSmt['현재수량'][i] = 0
