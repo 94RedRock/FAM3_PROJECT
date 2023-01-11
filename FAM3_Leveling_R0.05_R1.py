@@ -2003,7 +2003,7 @@ class SpThread(QObject):
                         dict_smtCnt[smtAssyName] -= df_input[resultCol][i]
         return [df_input, dict_smtCnt, alarmDetailNo, df_alarmDetail]
 
-    def grMaxCntReflect(self, df_input, isRemain, dict_categoryCnt, dict_firstGrCnt, dict_secGrCnt, alarmDetailNo, df_alarmDetail):
+    def grMaxCntReflect(self, df_input, isRemain, dict_categoryCnt, dict_firstGrCnt, dict_secGrCnt, alarmDetailNo, df_alarmDetail, limitCtCnt):
         """
         Args:
             df_input(DataFrame)         : 입력 DataFrame
@@ -2041,6 +2041,8 @@ class SpThread(QObject):
                     dict_firstGrCnt[df_input['1차_MAX_그룹'][i]] -= df_input[instCol][i]
                 df_input[resultCol][i] = df_input[instCol][i]
                 dict_categoryCnt[df_input['모듈 구분'][i]] -= df_input[instCol][i] * df_input['공수'][i]
+                if '/CT' in df_input['MS Code'][i]:
+                    limitCtCnt -= df_input[instCol][i]
             else:
                 if dict_categoryCnt[df_input['모듈 구분'][i]] >= df_input[instCol][i] * df_input['공수'][i]:
                     if df_input['1차_MAX_그룹'][i] != '-':
@@ -2432,8 +2434,12 @@ class SpThread(QObject):
             self.spReturnPb.emit(progress)
             if self.isDebug:
                 df_addSmtAssy.to_excel('.\\debug\\Sp\\flow12-1.xlsx')
+            
+            df_limitCtCond = pd.read_excel(self.list_masterFile[13])
+            limitCtCnt = df_limitCtCond[df_limitCtCond['상세구분'] == 'MAIN']['허용수량'].values[0]
+
             df_addSmtAssy['설비능력반영_착공량'] = 0
-            df_addSmtAssy, dict_categoryCnt, dict_firstGrCnt, dict_secGrCnt, alarmDetailNo, df_alarmDetail = self.grMaxCntReflect(df_addSmtAssy,
+            df_addSmtAssy, dict_categoryCnt, dict_firstGrCnt, dict_secGrCnt, alarmDetailNo, df_alarmDetail, limitCtCnt = self.grMaxCntReflect(df_addSmtAssy,
                                                                                                                                     False,
                                                                                                                                     dict_categoryCnt,
                                                                                                                                     dict_firstGrCnt,
