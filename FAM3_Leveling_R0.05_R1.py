@@ -2258,7 +2258,8 @@ class SpThread(QObject):
                 if self.isDebug:
                     df_joinSmt.to_excel('.\\debug\\Sp\\df_joinSmt1.xlsx')    
             else:
-                df_joinSmt = df_SmtAssyInven 
+                df_joinSmt = df_SmtAssyInven.copy()
+                df_joinSmt['현재수량'] = df_joinSmt['CURRENT_INV_QTY']
             #2차 특수피킹 리스트 불러오기 HSJ r0.05 end
             progress += round(maxPb / 20)
             self.spReturnPb.emit(progress)
