@@ -525,6 +525,7 @@ class MainThread(QObject):
             self.mainReturnPb.emit(progress)
             if self.isDebug:
                 df_SmtAssyInven.to_excel('.\\debug\\Main\\flow5.xlsx')
+            
             # 2차 메인피킹 리스트 불러오기 및 Smt Assy 재고량 Df와 Join
             df_secOrderMainList = pd.read_excel(self.list_masterFile[5], skiprows=5)
             df_joinSmt = pd.merge(df_secOrderMainList, df_SmtAssyInven, how='right', left_on='ASSY NO', right_on='PARTS_NO')
@@ -2248,19 +2249,28 @@ class SpThread(QObject):
                                     'ymi123!',
                                     "SELECT INV_D, PARTS_NO, CURRENT_INV_QTY FROM pdsg0040 where INV_D = TO_DATE(" + str(yesterday) + ",'YYYYMMDD')")
             df_SmtAssyInven['현재수량'] = 0
-            df_secOrderMainList = pd.read_excel(self.list_masterFile[5], skiprows=5)
-            df_joinSmt = pd.merge(df_secOrderMainList, df_SmtAssyInven, how='right', left_on='ASSY NO', right_on='PARTS_NO')
-            df_joinSmt['대수'] = df_joinSmt['대수'].fillna(0)
-            df_joinSmt['현재수량'] = df_joinSmt['CURRENT_INV_QTY'] - df_joinSmt['대수']
+            #2차 특수피킹 리스트 불러오기 HSJ r0.05 start
+            if Path(self.list_masterFile[14]).is_file():
+                df_secOrderOtherList = pd.read_excel(self.list_masterFile[14], skiprows=5)
+                df_joinSmt = pd.merge(df_secOrderOtherList, df_SmtAssyInven, how='right', left_on='ASSY NO', right_on='PARTS_NO')
+                df_joinSmt['대수'] = df_joinSmt['대수'].fillna(0)
+                df_joinSmt['현재수량'] = df_joinSmt['CURRENT_INV_QTY'] - df_joinSmt['대수']
+                if self.isDebug:
+                    df_joinSmt.to_excel('.\\debug\\Sp\\df_joinSmt1.xlsx')    
+            else:
+                df_joinSmt = df_SmtAssyInven 
+            #2차 특수피킹 리스트 불러오기 HSJ r0.05 end
             progress += round(maxPb / 20)
             self.spReturnPb.emit(progress)
             if self.isDebug:
                 df_SmtAssyInven.to_excel('.\\debug\\Sp\\flow5.xlsx')
-            dict_smtCnt = {} #commit
+                df_joinSmt.to_excel('.\\debug\\Sp\\df_joinSmt.xlsx')
+            dict_smtCnt = {} 
             for i in df_joinSmt.index:
                 if df_joinSmt['현재수량'][i] < 0:
                     df_joinSmt['현재수량'][i] = 0
                 dict_smtCnt[df_joinSmt['PARTS_NO'][i]] = df_joinSmt['현재수량'][i]
+            
             # PB01: S9221DS, TA40: S9091BU 재고량 미확인 모델 dict_smtCnt 추가
             df_smtUnCheck = pd.read_excel(self.list_masterFile[8])
             list_nonManageSmt = df_smtUnCheck['SMT ASSY'].tolist()
@@ -3453,6 +3463,10 @@ class Ui_MainWindow(QMainWindow):
             SpSlaveFilePath = r'.\\input\\Master_File\\' + date + r'\\'
         mainAteCapaFilePath = r'.\\input\\DB\\Main\\' + roundTxt + '\\Main_ATE_Capacity_Table.xlsx'
         ctCondFilePath = r'.\\input\\DB\\CT\\FAM3_CT_MST_Table.xlsx'
+        if os.path.exists(r'.\\input\\Master_File\\' +  date + r'\\100L1304(' + date[4:8] + ')OTHER_2차.xlsx'):
+            secOtherListFilePath = r'.\\input\\Master_File\\' + date + r'\\100L1304(' + date[4:8] + ')OTHER_2차.xlsx'
+        else:
+            secOtherListFilePath = r'.\\input\\Master_File\\' + date + r'\\'
         pathList = [sosFilePath,
                     mainFilePath,
                     spFilePath,
@@ -3466,7 +3480,8 @@ class Ui_MainWindow(QMainWindow):
                     nonSpTerminalFilePath,
                     SpSlaveFilePath,
                     mainAteCapaFilePath,
-                    ctCondFilePath]
+                    ctCondFilePath,
+                    secOtherListFilePath]
         for path in pathList:
             if os.path.exists(path):
                 file = glob.glob(path)[0]
